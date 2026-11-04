@@ -96,5 +96,7 @@ Timeseries-Total/
   * **Feature Engineering:** Trích xuất ma trận 24 bậc trễ ($y_{t-1}, y_{t-2}, \dots, y_{t-24}$) đại diện cho chu kỳ sinh hoạt trong ngày cùng các biến thống kê trượt (Rolling Mean 24h, Rolling Std 24h).
   * **Time-based Splitting:** Phân bổ **75% Train (90.954 mẫu) - 12.5% Val (15.159 mẫu) - 12.5% Test (15.159 mẫu)** theo đúng dòng thời gian, bảo vệ mô hình khỏi lỗi rò rỉ dữ liệu tương lai (Data Leakage).
   * **Mô hình hóa:** Huấn luyện mô hình Gradient Boosting (`XGBRegressor`) kết hợp phân tích Feature Importance để chứng minh tầm ảnh hưởng của các độ trễ chiến lược ($t-1$, $t-24$).
+  
+Đang trong giai đoạn hoàn thiện.
 
 ---
