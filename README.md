@@ -50,8 +50,15 @@ Timeseries-Total/
 │
 └── 📁 03-advanced-forecasting/           # MODULE 3: Dự báo chuỗi thời gian với Machine Learning
     ├── data/raw & processed/            # PJM Hourly Energy Consumption - AEP (121.296 mốc giờ, ~14 năm)
-    ├── docs/                            # Tài liệu kỹ thuật: DST handling, Lag feature matrix, Time split
-    └── scripts/main.ipynb               # Supervised transformation (24 lags), XGBoost, TimeSeriesSplit CV
+│   ├── docs/                                   # Báo cáo tổng thể & 5 chuyên đề phân tích chuyên sâu
+│   │   ├── 01_data_preparation_and_lag_features.md # Xử lý chuỗi liên tục, DST & Lag features
+│   │   ├── 02_feature_matrix_and_time_split.md     # Ma trận X-y & Time-based Train/Val/Test
+│   │   ├── 03_xgboost_modeling_and_evaluation.md   # Huấn luyện XGBoost & Feature Importance
+│   │   ├── 03_advanced_tuning_and_multistep.md     # 4 bài tập nâng cao: Rolling, Multi-step, CV, RF
+│   │   ├── 04_model_comparisons_and_insights.md    # Đối chiếu LR, RF, khảo sát lag p & ARIMA
+│   │   └── report.md                               # Báo cáo kỹ thuật tổng hợp toàn diện
+│   ├── notebooks/main.ipynb                    # Jupyter Notebook 59 cells hoàn chỉnh (Full outputs & figures)
+│   └── scripts/                                # Modular Scripts: train.py, models.py, evaluation.py...
 ```
 
 ---
@@ -91,12 +98,16 @@ Timeseries-Total/
 ### 🔹 Module 3: Machine Learning & Supervised Forecasting (`03-advanced-forecasting`)
 * **Tập dữ liệu:** American Electric Power (`AEP_hourly.csv`, phụ tải điện lưới PJM Bắc Mỹ).
 * **Quy mô:** **121.296 quan sát hàng giờ** liên tục qua ~14 năm (2004–2018).
-* **Quy trình kỹ thuật:**
-  * **Xử lý bất thường thời gian (Time-continuity pipeline):** Phát hiện và giải quyết 2 hiện tượng DST: xử lý trùng lặp giờ (Fall Back lùi 1h) bằng phép trung bình hóa, bù đắp 27 giờ khuyết thiếu (Spring Forward nhảy 1h) bằng lưới tần suất đều đặn (`asfreq('h')`) và nội suy thời gian. Đạt **100% tính liên tục** không còn mốc thời gian bị gián đoạn.
-  * **Feature Engineering:** Trích xuất ma trận 24 bậc trễ ($y_{t-1}, y_{t-2}, \dots, y_{t-24}$) đại diện cho chu kỳ sinh hoạt trong ngày cùng các biến thống kê trượt (Rolling Mean 24h, Rolling Std 24h).
-  * **Time-based Splitting:** Phân bổ **75% Train (90.954 mẫu) - 12.5% Val (15.159 mẫu) - 12.5% Test (15.159 mẫu)** theo đúng dòng thời gian, bảo vệ mô hình khỏi lỗi rò rỉ dữ liệu tương lai (Data Leakage).
-  * **Mô hình hóa:** Huấn luyện mô hình Gradient Boosting (`XGBRegressor`) kết hợp phân tích Feature Importance để chứng minh tầm ảnh hưởng của các độ trễ chiến lược ($t-1$, $t-24$).
-  
-Đang trong giai đoạn hoàn thiện.
+* **Quy trình kỹ thuật & Thành tựu nổi bật:**
+  * **Xử lý bất thường thời gian (Time-continuity pipeline):** Phát hiện và giải quyết triệt để 2 hiện tượng DST: xử lý trùng lặp giờ (Fall Back lùi 1h) bằng trung bình hóa, bù đắp 27 giờ khuyết thiếu (Spring Forward nhảy 1h) bằng lưới đều đặn (`asfreq('h')`) và nội suy thời gian. Đạt **100% tính liên tục**.
+  * **Đặc trưng đa chu kỳ (Multi-period Lags & Rolling):** Thiết kế ma trận 29 biến trễ chiến lược ($t-1 \dots t-24$ quán tính ngày, $t-48, t-72$ trung hạn và cụm tuần $t-167, t-168, t-169$) kết hợp 6 đặc trưng thống kê trượt (Rolling Mean/Std cửa sổ 6h, 24h, 168h chống rò rỉ với `shift(1)`).
+  * **Time-based Splitting:** Phân bổ **75% Train (90.845 mẫu) - 12.5% Val (15.140 mẫu) - 12.5% Test (15.142 mẫu)** tuần tự theo dòng thời gian.
+  * **Mô hình hóa & Tối ưu hóa:** Huấn luyện `XGBoost Regressor`, phân tích đa chiều Feature Importance (Gain, Weight, Permutation), tinh chỉnh siêu tham số với **`TimeSeriesSplit` (5-fold Expanding Window CV)** và kiểm chứng so sánh với **`Random Forest Regressor`** cùng **`Linear Regression`**.
+  * **Dự báo đa bước (Multi-step Forecasting):** Triển khai và đối chiếu chiến lược **Direct Multi-Step** vs **Recursive Forecasting** cho chu kỳ 24 giờ tiếp theo (Direct giảm 13,86% sai số tích lũy).
+* **Kết quả thực nghiệm trên tập Test Unseen (15.142 giờ):**
+  * **XGBoost Tuned (TimeSeriesSplit + Refit):** **MAE = 123,28 MW**, **RMSE = 163,25 MW**, **MAPE = 0,84%**, **$R^2 = 0,9953$** (Mô hình tối ưu nhất toàn dự án).
+  * **XGBoost Baseline (29 Lags):** MAE = 125,32 MW, RMSE = 165,39 MW, MAPE = 0,86%, $R^2 = 0,9951$ (Giảm 67,72% sai số RMSE so với Persistence Naive 512,41 MW).
+  * **Random Forest Regressor:** MAE = 139,32 MW, RMSE = 188,13 MW, MAPE = 0,95%, $R^2 = 0,9937$.
+  * **Linear Regression (AR 29 lags):** MAE = 128,33 MW, RMSE = 168,73 MW, MAPE = 0,88%, $R^2 = 0,9949$.
 
 ---

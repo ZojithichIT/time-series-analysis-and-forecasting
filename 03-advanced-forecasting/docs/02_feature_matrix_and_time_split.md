@@ -1,18 +1,18 @@
 # Phân Tách Đặc Trưng & Phân Chia Train / Validation / Test (Feature Matrix & Time-Based Splitting)
 
-Tài liệu này chi tiết hóa toàn bộ quy trình thực hiện **Bước 3: Chia $X - y$** và **Bước 4: Chia Train / Validation / Test theo thời gian** với tỷ lệ **$75\% - 12.5\% - 12.5\%$** trong notebook [`scripts/main.ipynb`](../scripts/main.ipynb).
+Tài liệu này chi tiết hóa toàn bộ quy trình thực hiện **Bước 3: Chia $X - y$** và **Bước 4: Chia Train / Validation / Test theo thời gian** với tỷ lệ **$75\% - 12.5\% - 12.5\%$** trong notebook [`notebooks/main.ipynb`](../notebooks/main.ipynb).
 
 ---
 
 ## 1. Cơ Sở Lý Thuyết & Biểu Diễn Toán Học
 
 ### 1.1. Ma trận đặc trưng $X$ và Vector biến mục tiêu $y$ (Bước 3)
-Từ bảng dữ liệu học có giám sát `df_supervised` thu được sau Bước 2 ($121.272$ dòng $\times 25$ cột), ta phân tách thành:
-1. **Vector mục tiêu ($y \in \mathbb{R}^N$):** Cột phụ tải $y_t$ tại thời điểm hiện tại cần dự đoán.
-2. **Ma trận đặc trưng ($X \in \mathbb{R}^{N \times p}$):** Gồm $p = 24$ đặc trưng trễ trong quá khứ:
-   $$\mathbf{x}_t = \big[ y_{t-1}, y_{t-2}, \dots, y_{t-24} \big]^T \in \mathbb{R}^{24}$$
+Từ bảng dữ liệu học có giám sát `df_supervised` thu được sau Bước 2 ($121.127$ dòng $\times 30$ cột), ta phân tách thành:
+1. **Vector mục tiêu ($y \in \mathbb{R}^N$):** Cột phụ tải $y_t$ tại thời điểm hiện tại cần dự đoán ($121.127$ quan sát).
+2. **Ma trận đặc trưng ($X \in \mathbb{R}^{N \times 29}$):** Gồm $29$ đặc trưng trễ đa chu kỳ trong quá khứ:
+   $$\mathbf{x}_t = \big[ y_{t-1}, \dots, y_{t-24}, y_{t-48}, y_{t-72}, y_{t-167}, y_{t-168}, y_{t-169} \big]^T \in \mathbb{R}^{29}$$
 3. **Mục tiêu học máy:** Tìm hàm ánh xạ phi tuyến xấp xỉ:
-   $$\hat{y}_t = f(\mathbf{x}_t) = f(y_{t-1}, y_{t-2}, \dots, y_{t-24})$$
+   $$\hat{y}_t = f(\mathbf{x}_t) = f(y_{t-1}, \dots, y_{t-24}, y_{t-48}, y_{t-72}, y_{t-167}, y_{t-168}, y_{t-169})$$
 
 ### 1.2. Nguyên tắc phân chia theo trình tự thời gian (Time-Based Splitting - Bước 4)
 Khác với bài toán học máy trên dữ liệu bảng độc lập (tabular i.i.d.), chuỗi thời gian có đặc tính **phụ thuộc thời gian** và **tính nhân quả (Causality)**:
@@ -28,7 +28,7 @@ Việc phân chia thành 3 phần thay vì 2 phần mang lại lợi thế vư�
 
 ```text
 [======================= TRAIN (75.0%) =======================][== VALIDATION (12.5%) ==][===== TEST (12.5%) =====]
-2004-10-02 01:00                                            2015-02-16 18:00          2016-11-09 09:00       2018-08-03 00:00
+2004-10-08 02:00                                            2015-02-18 06:00          2016-11-10 02:00       2018-08-03 00:00
 ```
 
 1. **Tập Huấn Luyện (Train - 75%):**
@@ -45,27 +45,27 @@ Việc phân chia thành 3 phần thay vì 2 phần mang lại lợi thế vư�
 
 ## 3. Kết Quả Định Lượng Thực Nghiệm
 
-Toàn bộ $121.272$ mẫu thời gian được phân chia chính xác tuyệt đối:
+Toàn bộ $121.127$ mẫu thời gian được phân chia chính xác tuyệt đối:
 
 | Thuộc tính | Toàn bộ chuỗi ($N$) | Tập Train ($75\%$) | Tập Validation ($12.5\%$) | Tập Test ($12.5\%$) |
 |---|---|---|---|---|
-| **Số quan sát (giờ)** | **$121.272$** | **$90.954$** | **$15.159$** | **$15.159$** |
+| **Số quan sát (giờ)** | **$121.127$** | **$90.845$** | **$15.140$** | **$15.142$** |
 | **Tỷ lệ phần trăm** | $100,0\%$ | $75,00\%$ | $12,50\%$ | $12,50\%$ |
-| **Kích thước ma trận $X$** | $(121272, 24)$ | $(90954, 24)$ | $(15159, 24)$ | $(15159, 24)$ |
-| **Kích thước vector $y$** | $(121272,)$ | $(90954,)$ | $(15159,)$ | $(15159,)$ |
-| **Mốc bắt đầu** | `2004-10-02 01:00:00` | `2004-10-02 01:00:00` | `2015-02-16 19:00:00` | `2016-11-09 10:00:00` |
-| **Mốc kết thúc** | `2018-08-03 00:00:00` | `2015-02-16 18:00:00` | `2016-11-09 09:00:00` | `2018-08-03 00:00:00` |
-| **Thời lượng tương đương** | $\approx 13,84\text{ năm}$ | $\approx 10,38\text{ năm}$ | $\approx 1,73\text{ năm}$ | $\approx 1,73\text{ năm}$ |
-| **Phụ tải trung bình (mean)** | $15.498,92\text{ MW}$ | $15.762,54\text{ MW}$ | $14.618,89\text{ MW}$ | $14.801,07\text{ MW}$ |
-| **Độ lệch chuẩn (std)** | $2.591,42\text{ MW}$ | $2.574,97\text{ MW}$ | $2.575,58\text{ MW}$ | $2.373,28\text{ MW}$ |
+| **Kích thước ma trận $X$** | $(121127, 29)$ | $(90845, 29)$ | $(15140, 29)$ | $(15142, 29)$ |
+| **Kích thước vector $y$** | $(121127,)$ | $(90845,)$ | $(15140,)$ | $(15142,)$ |
+| **Mốc bắt đầu** | `2004-10-08 02:00:00` | `2004-10-08 02:00:00` | `2015-02-18 07:00:00` | `2016-11-10 03:00:00` |
+| **Mốc kết thúc** | `2018-08-03 00:00:00` | `2015-02-18 06:00:00` | `2016-11-10 02:00:00` | `2018-08-03 00:00:00` |
+| **Thời lượng tương đương** | $\approx 13,82\text{ năm}$ | $\approx 10,36\text{ năm}$ | $\approx 1,73\text{ năm}$ | $\approx 1,73\text{ năm}$ |
+| **Phụ tải trung bình (mean)** | $15.501,43\text{ MW}$ | $15.767,34\text{ MW}$ | $14.605,68\text{ MW}$ | $14.801,76\text{ MW}$ |
+| **Độ lệch chuẩn (std)** | $2.591,78\text{ MW}$ | $2.575,97\text{ MW}$ | $2.563,56\text{ MW}$ | $2.374,38\text{ MW}$ |
 
 ### Kiểm định tính liên tục & bảo toàn dữ liệu:
 * **Liên tục giữa Train và Validation:**  
-  $$\Delta t = t_{\text{val, start}} - t_{\text{train, end}} = \text{2015-02-16 19:00:00} - \text{2015-02-16 18:00:00} = 1\text{ giờ} \quad (\text{Đạt})$$
+  $$\Delta t = t_{\text{val, start}} - t_{\text{train, end}} = \text{2015-02-18 07:00:00} - \text{2015-02-18 06:00:00} = 1\text{ giờ} \quad (\text{Đạt})$$
 * **Liên tục giữa Validation và Test:**  
-  $$\Delta t = t_{\text{test, start}} - t_{\text{val, end}} = \text{2016-11-09 10:00:00} - \text{2016-11-09 09:00:00} = 1\text{ giờ} \quad (\text{Đạt})$$
+  $$\Delta t = t_{\text{test, start}} - t_{\text{val, end}} = \text{2016-11-10 03:00:00} - \text{2016-11-10 02:00:00} = 1\text{ giờ} \quad (\text{Đạt})$$
 * **Bảo toàn số lượng mẫu:**  
-  $$N_{\text{train}} + N_{\text{val}} + N_{\text{test}} = 90.954 + 15.159 + 15.159 = 121.272 = N \quad (\text{Đạt } 100\%)$$
+  $$N_{\text{train}} + N_{\text{val}} + N_{\text{test}} = 90.845 + 15.140 + 15.142 = 121.127 = N \quad (\text{Đạt } 100\%)$$
 
 ---
 
@@ -81,7 +81,25 @@ Biểu đồ trực quan hóa 3 tập dữ liệu được tự động tạo v�
 
 ---
 
-## 5. Đúc Kết & Sẵn Sàng Cho Bước 5 (Huấn Luyện XGBoost)
+## 5. Danh Mục Dữ Liệu Đã Lưu Vào data/processed/
+
+Toàn bộ các tập dữ liệu phân chia đã được xuất và lưu trữ trong thư mục [`data/processed/`](../data/processed):
+
+| Tên File | Loại Dữ Liệu | Số Dòng | Số Cột | Kích Thước | Mô Tả Chi Tiết |
+|---|---|:---:|:---:|:---:|---|
+| [`aep_train.csv`](../data/processed/aep_train.csv) | Bảng hoàn chỉnh (Train) | $90.845$ | $30$ | $\approx 23,5\text{ MB}$ | Chứa `DatetimeIndex`, Target $y$ và $29$ cột biến trễ đa chu kỳ ($75\%$). |
+| [`aep_val.csv`](../data/processed/aep_val.csv) | Bảng hoàn chỉnh (Val) | $15.140$ | $30$ | $\approx 3,9\text{ MB}$ | Chứa `DatetimeIndex`, Target $y$ và $29$ cột biến trễ đa chu kỳ ($12,5\%$). |
+| [`aep_test.csv`](../data/processed/aep_test.csv) | Bảng hoàn chỉnh (Test) | $15.142$ | $30$ | $\approx 3,9\text{ MB}$ | Chứa `DatetimeIndex`, Target $y$ và $29$ cột biến trễ đa chu kỳ ($12,5\%$). |
+| [`X_train.csv`](../data/processed/X_train.csv) | Ma trận đặc trưng (Train) | $90.845$ | $29$ | $\approx 22,8\text{ MB}$ | Chỉ chứa $29$ cột biến trễ của tập Train. |
+| [`y_train.csv`](../data/processed/y_train.csv) | Vector mục tiêu (Train) | $90.845$ | $1$ | $\approx 2,6\text{ MB}$ | Chỉ chứa nhãn mục tiêu phụ tải $y$ của tập Train. |
+| [`X_val.csv`](../data/processed/X_val.csv) | Ma trận đặc trưng (Val) | $15.140$ | $29$ | $\approx 3,8\text{ MB}$ | Chỉ chứa $29$ cột biến trễ của tập Validation. |
+| [`y_val.csv`](../data/processed/y_val.csv) | Vector mục tiêu (Val) | $15.140$ | $1$ | $\approx 0,4\text{ MB}$ | Chỉ chứa nhãn mục tiêu phụ tải $y$ của tập Validation. |
+| [`X_test.csv`](../data/processed/X_test.csv) | Ma trận đặc trưng (Test) | $15.142$ | $29$ | $\approx 3,8\text{ MB}$ | Chỉ chứa $29$ cột biến trễ của tập Test. |
+| [`y_test.csv`](../data/processed/y_test.csv) | Vector mục tiêu (Test) | $15.142$ | $1$ | $\approx 0,4\text{ MB}$ | Chỉ chứa nhãn mục tiêu phụ tải $y$ của tập Test. |
+
+---
+
+## 6. Đúc Kết & Sẵn Sàng Cho Bước 5 (Huấn Luyện XGBoost)
 
 Việc có sẵn tập Validation độc lập tạo điều kiện lý tưởng cho **Bước 5: Huấn luyện mô hình XGBoost Regressor**:
 ```python
@@ -98,4 +116,3 @@ model.fit(
 )
 ```
 Mô hình sẽ theo dõi hàm mất mát trên cả `eval_set` để tự động xác định điểm dừng tối ưu, tránh tình trạng Overfitting trên tập Train.
-
